@@ -1,4 +1,5 @@
 from typing import List, Optional
+import time
 
 from groq import Groq
 
@@ -20,6 +21,8 @@ class GroqCoverLetterGenerator:
         matched_skills: List[str],
         resume_snippets: List[str],
         resume_bio: Optional[str] = None,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
     ) -> str:
         user_prompt = COVER_LETTER_USER_PROMPT.format(
             company=company,
@@ -31,12 +34,22 @@ class GroqCoverLetterGenerator:
             resume_snippets="\n\n".join(resume_snippets) if resume_snippets else "(no snippets found)",
         )
 
-        completion = self.client.chat.completions.create(
-            model=self.model,
-            temperature=self.temperature,
-            messages=[
-                {"role": "system", "content": COVER_LETTER_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
-        return completion.choices[0].message.content.strip()
+        last_err: Optional[Exception] = None
+        for attempt in range(max_retries):
+            try:
+                completion = self.client.chat.completions.create(
+                    model=self.model,
+                    temperature=self.temperature,
+                    messages=[
+                        {"role": "system", "content": COVER_LETTER_SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                )
+                return completion.choices[0].message.content.strip()
+            except Exception as e:
+                last_err = e
+                # Exponential backoff
+                sleep_s = base_delay * (2**attempt)
+                time.sleep(sleep_s)
+        # If all retries failed, raise the last error
+        raise last_err if last_err else RuntimeError("Unknown error calling Groq API")

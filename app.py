@@ -14,6 +14,16 @@ def init_env():
     load_dotenv()
 
 
+@st.cache_data(show_spinner=False)
+def parse_resume_cached(file_bytes: bytes) -> str:
+    return extract_text_from_pdf(file_bytes)
+
+
+@st.cache_data(show_spinner=False)
+def jd_skills_cached(jd_text: str):
+    return sorted(list(extract_jd_skills(jd_text)))
+
+
 def get_api_key_from_env_or_input() -> Optional[str]:
     key = os.getenv("GROQ_API_KEY")
     if key:
@@ -39,7 +49,7 @@ def main():
         company = st.text_input("Company Name", placeholder="Acme Corp")
         job_title = st.text_input("Job Title", placeholder="Senior Software Engineer")
         jd_text = st.text_area("Job Description", height=240, placeholder="Paste the JD here…")
-        uploaded_pdf = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
+        uploaded_pdf = st.file_uploader("Upload Resume (PDF)", type=["pdf"]) 
 
         model = st.selectbox(
             "Groq Model",
@@ -66,17 +76,17 @@ def main():
         with st.status("Processing…", expanded=False) as status:
             status.update(label="Reading resume PDF")
             try:
-                resume_text = extract_text_from_pdf(uploaded_pdf.read())
+                resume_text = parse_resume_cached(uploaded_pdf.read())
             except Exception as e:
                 st.exception(e)
                 st.stop()
 
             status.update(label="Parsing job description and matching skills")
-            jd_skills = extract_jd_skills(jd_text)
-            match_result = match_resume_to_jd(jd_skills, resume_text)
+            jd_skills = jd_skills_cached(jd_text)
+            match_result = match_resume_to_jd(set(jd_skills), resume_text)
 
             status.update(label="Selecting supporting snippets from resume")
-            snippets = select_supporting_snippets(match_result, resume_text)
+            snippets = select_supporting_snippets(match_result, resume_text, jd_text)
 
             status.update(label="Generating cover letter with Groq")
             generator = GroqCoverLetterGenerator(api_key=api_key, model=model, temperature=temperature)
@@ -85,7 +95,7 @@ def main():
                     company=company,
                     job_title=job_title,
                     job_description=jd_text,
-                    jd_skills=sorted(list(jd_skills)),
+                    jd_skills=jd_skills,
                     matched_skills=match_result["matched_skills"],
                     resume_snippets=snippets,
                     resume_bio=normalize_text(resume_text[:1200])  # brief resume summary context
