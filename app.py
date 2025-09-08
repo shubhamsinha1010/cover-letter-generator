@@ -53,7 +53,7 @@ def main():
 
         model = st.selectbox(
             "Groq Model",
-            options=["llama3-70b-8192", "mixtral-8x7b-32768", "llama3-8b-8192"],
+            options=["llama-3.1-8b-instant"],
             index=0,
             help="Select the LLM model hosted on Groq"
         )
