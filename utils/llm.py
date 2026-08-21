@@ -7,7 +7,7 @@ from .prompts import COVER_LETTER_SYSTEM_PROMPT, COVER_LETTER_USER_PROMPT
 
 
 class GroqCoverLetterGenerator:
-    def __init__(self, api_key: str, model: str = "llama3-70b-8192", temperature: float = 0.3):
+    def __init__(self, api_key: str, model: str = "openai/gpt-oss-20b", temperature: float = 0.3):
         self.client = Groq(api_key=api_key)
         self.model = model
         self.temperature = temperature

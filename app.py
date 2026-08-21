@@ -53,7 +53,7 @@ def main():
 
         model = st.selectbox(
             "Groq Model",
-            options=["llama-3.1-8b-instant"],
+            options=["openai/gpt-oss-20b", "openai/gpt-oss-120b"],
             index=0,
             help="Select the LLM model hosted on Groq"
         )

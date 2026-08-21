@@ -27,7 +27,7 @@ streamlit run app.py
 
 ## Configuration
 - Set `GROQ_API_KEY` in `.env` or input it in the app sidebar expander.
-- Choose a Groq model in the sidebar: `llama3-70b-8192` (default), `mixtral-8x7b-32768`, or `llama3-8b-8192`.
+- Choose a Groq model in the sidebar: `openai/gpt-oss-20b` (default) or `openai/gpt-oss-120b`.
 - Adjust creativity (temperature) as desired.
 
 ## Notes
